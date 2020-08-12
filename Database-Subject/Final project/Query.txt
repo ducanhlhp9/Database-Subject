@@ -1,0 +1,417 @@
+
+1.	Thay đổi bảng SEAFOOD thêm 1 thuộc tính Country_id
+alter table SEAFOOD
+add 
+	Country_id int,
+add constraint Exploited
+	foreign key (Country_id) references COUNTRY(Country_id);
+
+2.	Update thêm id của Viet Nam làm quốc gia đánh bắt nhiều 'Tuna' nhất ở 'The South China Sea' vào bảng SEAFOOD 
+update SEAFOOD
+set 
+	Country_id = (select Country_id from COUNTRY
+	where Country_name = 'China')
+where 
+	Seafood_id = (select Seafood_id from SEA
+where 
+	sea_name = 'The South China Sea')
+and 
+	Seafood_name like '%Tuna%';
+
+ 	UPDATE
+3.	Cập nhật giá trị kinh tế du lịch của biển ‘Hudson Bay’ thành 500 nếu giá trị kinh tế du lịch của biển đó thấp hơn 500
+update 
+TOURISM 
+Set
+Economic_value = 500 
+where 
+Economic_value<500 
+and 
+Tourism_id = (select Tourism_id from SEA where Sea_name = "Hudson Bay");
+
+
+4.	Cập nhật tên khoáng sản thành “Xang” của biển Hudson Bay nếu tên khoáng sản hiện tại không bắt đầu với “Na”
+
+update 
+MINERAL 
+Set
+Mineral_name = "Xang" 
+where 
+Mineral_id = (select Mineral_id from SEA where Sea_name="Hudson Bay") 
+and not
+Mineral_name like "Na%";
+
+
+
+	
+5.	Cập nhật giá trị kinh tế (Economic_value) của những thủy hải sản (SEAFOOD) có id lần lượt là 1, 6, 9 lên thêm lần lượt là 10%, 20%, 30%
+update 
+SEAFOOD 
+set 
+Economic_value = case Seafood_id  
+when 1 then Economic_value + Economic_value*.1 
+when 6 then Economic_value + Economic_value*.2 
+when 9 then Economic_value + Economic_value*.3 
+else
+Economic_value 
+end;
+
+
+
+ 	SELECT
+
+6.	Đưa ra Đại dương có biển sâu nhất
+select 
+	distinct LOCATION.Ocean,SEA.sea_name, SEA.Deep 
+from 
+	LOCATION 
+join 
+	SEA on SEA.Location_id = LOCATION.Location_id 
+where SEA.Deep >= all(select Deep from SEA); 
+
+
+7.	Đưa ra tên biển đánh bắt nhiều “Grass Carp” nhất
+Select 
+	SEA.sea_name, SEAFOOD.Catches
+From 
+	SEA join SEAFOOD
+on 
+	SEA.Seafood_id = SEAFOOD.Seafood_id
+where 
+	SEAFOOD.Seafood_name = ‘Grass Carp’
+and SEAFOOD.Catches >= all(select Catches from SEAFOOD
+where Seafood_name like '%Grass Carp%');
+
+8.	Đưa ra biển có dịch vụ tàu du lịch có doanh thu lớn nhất 
+select 
+	Sea_name
+from 
+	SEA s
+where 
+	Tourism_id = (select Tourism_id from TOURISM t
+where 
+	Tourism_name like '%Cruise Ships%'
+and 
+	cast(t.Economic_value as int) >=  all(
+	select cast(Economic_value as int) from TOURISM
+where 
+	Tourism_name like '%Cruise Ships%')
+);
+
+9.	Đưa ra tên 1 châu lục có nhiều quốc gia gần biển nhất
+select 
+	region_name 
+from 
+	REGION r
+join COUNTRY c on (r.Region_id = c.Region_id)
+group by 
+	c.Region_id
+order by 
+	count(*) limit 1;
+
+
+
+10.	Liệt kê các biển tiếp giáp Việt Nam
+select 
+	sea_name from SEA s
+join 
+	LOCATION l on (s.Location_id = l.Location_id)
+join 
+	COUNTRY c on (c.Country_id = l.Country_id)
+where 
+	Country_name = 'Vietnam';
+
+11.	Kể tên 2 biển ở Đại Tây Dương có trữ lượng khí tự nhiên lớn nhất
+select sea_name 
+from 
+	SEA s
+join 
+	LOCATION l on (s.Location_id = l.Location_id)
+join 
+	MINERAL m on (s.Mineral_id = m.Mineral_id)
+where 
+	l.Ocean like '%Atlantic%'
+and 
+	m.Mineral_name like '%Natural gas%'
+group by s.Sea_id
+order by m.Reserves limit 2;
+
+12.	Liệt kê các biển ở Thái Bình Dương mà không tiếp giáp Trung Quốc
+select 
+	distinct sea_name from SEA s
+join 
+	LOCATION l on (s.Location_id = l.Location_id)
+where 
+	l.Ocean like '%Pacific%'
+and l.Location_id 
+not in (select l.Location_id from LOCATION l
+	join COUNTRY c on (l.Country_id = c.Country_id)
+	where Country_name like '%China%');
+
+
+
+13.	Liệt kê các biển nằm giữa chí tuyến Bắc và vòng Cực Bắc
+select 
+	distinct sea_name from SEA s
+join 
+	LOCATION l on (s.Location_id = l.Location_id)
+where 
+	l.Latitude between 23 and 66;
+
+
+
+14.	Liệt kê các biển tiếp giáp nhiều hơn 5 nước
+select 
+	s.sea_name, count(l.Country_id) as Countries
+from 
+	SEA s
+join 
+	LOCATION l on (s.Location_id = l.Location_id)
+group by 
+	s.Sea_id
+having count(l.Location_id) >= 5;
+
+
+
+15.	Đưa ra ID, Tên, độ sâu, châu lục của các biển có độ sâu lớn hơn 1000m và có nước tiếp giáp nằm ở châu Á
+
+select 
+distinct S.Sea_id, S.Sea_name, S.Deep, R.Region_name 
+from 
+SEA S 
+join LOCATION L on (S.Location_id = L.Location_id) 
+join COUNTRY C on (L.Country_id = C.Country_id) 
+join REGION R on (C.Region_id = R.Region_id)
+where 
+R.Region_name = "Asia" and S.Deep >1000 
+group by S.Sea_id;
+
+
+
+16.	Đưa ra ID, tên biển, Châu lục, Sản lượng đánh bắt thủy hải sản của biển có nước tiếp giáp nằm ở châu Á, mà có sản lượng thủy hải sản là lớn nhất
+
+
+select 
+distinct S.Sea_id, S.Sea_name, SF.Catches 
+from 
+SEA S 
+join SEAFOOD SF on (S.Seafood_id = SF.Seafood_id) 
+join LOCATION L on (S.Location_id = L.Location_id) 
+join COUNTRY C on (L.Country_id = C.Country_id) 
+join REGION R on (C.Region_id = R.Region_id) 
+where 
+R.Region_name = "Asia" 
+having 
+	SF.Catches >= all (
+select 
+distinct SF.Catches 
+from 
+SEA S 
+join SEAFOOD SF on (S.Seafood_id = SF.Seafood_id) 
+join LOCATION L on (S.Location_id = L.Location_id) 
+join COUNTRY C on (L.Country_id = C.Country_id) 
+join REGION R on (C.Region_id = R.Region_id) 
+where 
+R.Region_name = "Asia" 
+);
+
+
+17.	Đưa ra ID, Tên, Diện tích của biển có diện tích lớn thứ 3
+
+Select 
+	distinct S1.Sea_id, S1.Sea_name, S1.Square 
+from 
+	SEA S1 
+where 3 = (select count(distinct S2.Square) 
+from
+	SEA S2 
+where (S2.Square >= S1.Square)) 
+order by 
+	S1.Square desc;
+
+
+
+18.	Đưa ra thông tin biển mà chữ cái thứ 2 không phải là chữ “e”
+
+	select * from SEA 
+	where sea_name not in (select Sea_name from SEA where instr(Sea_name, 'e') =2);
+19.	Đưa ra ID, Tên biển, Các nước tiếp giáp, và tổng sản lượn của các biển.
+select 
+	distinct S.Sea_id, S.Sea_name, group_concat(distinct C.Country_name, " ") as 	Country, sum(distinct Reserves) 
+from SEA S 
+join 
+	MINERAL M on (S.Mineral_id = M.Mineral_id) 
+join 
+	LOCATION L on (S.Location_id = L.Location_id) 
+join 
+	COUNTRY C on ( L.Country_id = C.Country_id) 
+group by S.Sea_id;
+
+
+20.	Liệt kê các biển và trữ lượng dầu mỏ (Nhiều- Trung bình – ít)
+select s.sea_name,
+	(case when m.Reserves > 300000 then 'Dau mo nhieu' when m.Reserves > 100000 then 'Dau mo trung binh' when m.Reserves > 000000 then 'Dau mo it' end ) as Resources
+from 
+	SEA s
+join 
+	MINERAL m on (s.Mineral_id = m.Mineral_id)
+where 
+	m.Mineral_name like '%Petroleum%';
+
+
+
+21.	Lấy ra tên biển tiếp giáp nhiều quốc gia nhất
+Select s.sea_name, count(l.Country_id) as Countries
+from SEA s
+join 
+	LOCATION l on (s.Location_id = l.Location_id)
+group by s.Sea_id
+having count(l.Location_id) >= all
+	(select count(Location_id) from LOCATION group by Location_id);
+
+22.	 Liệt ra tên các nước tiếp giáp với ‘The South China Sea’
+select 
+	Country_name from COUNTRY c
+join 
+	LOCATION l on (c.Country_id = l.Country_id)
+join 
+	SEA s on (l.Location_id = s.Location_id)
+where 
+	s.sea_name like '%The South China Sea%';
+
+
+
+
+23.	Lập ma trận tọa độ tương đối của các biển
+
+select s.sea_name,l.latitude,
+(case when l.Longitude > -180 and l.Longitude < -90 then '*' else ' 'end) as '90-',
+(case when l.Longitude > -90 and l.Longitude < 00 then '*' else ' ' end) as '0-',
+(case when l.Longitude > 00 and l.Longitude < 90 then '*' else ' ' end) as '0+',
+(case when l.Longitude > 90 then '*' else ' 'end) as '90+'
+from SEA s 
+join 
+	LOCATION l on (s.Location_id = l.Location_id)
+group by l.Location_id
+order by l.Latitude desc;
+
+
+
+
+
+24.	Đưa ra tổng giá trị kinh tế ngành du lịch của các biển thuộc "Pacific Ocean"
+
+Select 
+	distinct S.Sea_id, S.Sea_name, sum(distinct T.Economic_value) 
+from 
+	SEA S join TOURISM T on (S.Tourism_id = T.Tourism_id) 
+join 
+	LOCATION L on (S.Location_id=L.Location_id)
+where L.Location_id 
+in 
+	(select L1.Location_id from LOCATION L1 where L1.Ocean like "%Pacific Ocean%")
+group by S.Sea_id ;
+
+
+
+25.	 Đưa ra biển tiếp giáp nhiều hơn 5 quốc gia và có sản lượng đánh bắt hải sản là lớn nhất
+
+
+select 
+	s.sea_name, sum(distinct Catches) as Total
+from SEA s
+join 
+	LOCATION l on (s.Location_id = l.Location_id)
+join 
+	SEAFOOD sf on (s.Seafood_id = sf.Seafood_id)
+group by l.Location_id
+having count(l.Location_id) >= 5
+and sum(distinct Catches) >= all(
+select 
+	sum(distinct Catches) as Total
+from SEA s
+join 
+	LOCATION l on (s.Location_id = l.Location_id)
+join 
+	SEAFOOD sf on (s.Seafood_id = sf.Seafood_id)
+group by l.Location_id
+having count(l.Location_id) >= 5
+);
+
+
+
+26.	Biển "Mediterranean Sea" tiếp giáp với nhiều quốc gia ở khu vực nào nhất
+
+
+select Region_name from REGION r 
+join COUNTRY c 
+on (r.Region_id = c.Region_id)
+join LOCATION l
+on (c.Country_id = l.Country_id)
+where l.Location_id = (select Location_id from SEA
+where sea_name like '%Mediterranean%')
+group by c.Region_id
+having count(distinct l.Country_id) >= all(
+select count(distinct l.Country_id) from REGION r 
+join COUNTRY c 
+on (r.Region_id = c.Region_id)
+join LOCATION l
+on (c.Country_id = l.Country_id)
+where l.Location_id = (select Location_id from SEA
+where sea_name like '%Mediterranean%')
+group by c.Region_id
+);
+
+
+
+27.	Đưa ra tổng “Natural gas” của các biển trong “Atlantic Ocean”
+
+select L.Ocean, sum(distinct M.Reserves) as "Atlantic Ocean's Reserves of Natural Gas" from SEA S join MINERAL M on (S.Mineral_id = M.Mineral_id) join LOCATION L on (S.Location_id = L.Location_id) where M.Mineral_name = "Natural gas" and L.Ocean = "Atlantic Ocean";
+28.	Khu vực Europe có những biển nào
+
+select S.Sea_id, S.Sea_name, R.Region_name from SEA S join LOCATION L on (S.Location_id = L.Location_id) join COUNTRY C on (C.Country_id = L.Country_id) join REGION R on ( R.Region_id = C.Region_id) where R.Region_id = (select R1.Region_id from REGION R1 where R1.Region_name like "%Europe%");
+
+29.	Đưa ra tổng giá trị kinh tế hải sản và du lịch của tất cả các
+	
+	Select distinct S.Sea_id, S.Sea_name, sum(distinct T.Economic_value) as 	"Tourism_value", sum(distinct SF.Economic_value) as "Seafood_value", sum(distinct 	T.Economic_value) + sum(distinct SF.Economic_value) as "Total of Economic value" 	from SEA S join TOURISM T on (S.Tourism_id = T.Tourism_id) join SEAFOOD SF on 	(S.Seafood_id = SF.Seafood_id) group by S.Sea_id;
+
+
+
+30.	Xóa bản ghi của bảng SEA mà có  tiếp giáp với Trung Quốc và có trữ lượng khí đốt là lớn nhất.
+
+
+delete from SEA
+where sea_name = 
+(select sea_name from (select * from SEA) s
+join LOCATION l on (s.Location_id = l.Location_id)
+join MINERAL m on (s.Mineral_id = m.Mineral_id)
+join COUNTRY c on (l.Country_id = c.Country_id)
+where c.Country_name like '%China%'
+and m.Mineral_name like '%Natural gas%'
+and m.Reserves >= all
+(select m.Reserves from MINERAL m
+join SEA s1 on (s1.Mineral_id = m.Mineral_id)
+join LOCATION l on (s1.Location_id = l.Location_id)
+join COUNTRY c on (l.Country_id = c.Country_id)
+where c.Country_name like '%China%'
+and m.Mineral_name like '%Natural gas%')
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

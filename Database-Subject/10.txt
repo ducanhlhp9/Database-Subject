@@ -1,0 +1,28 @@
+1. Đưa ra khu vực có nhiều quốc gia có biển nhất
+2. Đưa ra biển có tổng giá trị kinh tế của Du lịch là lớn nhất
+3. Đưa ra biển có diện tích >500000 và có lượng khách du lịch lớn nhất
+4. Đưa ra tên đại dương có chứa nhiều biển nhất
+5. Đưa ra tổng giá trị kinh tế ngành du lịch của các biển thuộc "Pacific Ocean"
+6. Đưa ra tên Đại dương có biển mà trữ lượng khoáng sản là lớn nhất
+7. Biển "Mediterranean Sea" tiếp giáp với nhiều quốc gia ở khu vực nào nhất
+8. Đưa ra biển tiếp giáp với nhiều hơn 5 quốc gia và có khối lượng đánh bắt hải sản là lớn nhất
+9. Đưa ra đại dương có biển sâu nhất
+select 
+	LOCATION.Ocean,SEA.sea_name, SEA.Deep 
+from 
+	LOCATION 
+join 
+	SEA 
+on
+	SEA.Location_id = LOCATION.Location_id 
+order by Deep DESC 
+limit 1;
+10. Đưa ra tên biển đánh bắt nhiều "Grass Carp " nhất
+select 
+	SEA.sea_name, SEAFOOD.Catches 
+from
+	SEA join SEAFOOD 
+on
+	SEA.Seafood_id = SEAFOOD.Seafood_id 
+where
+ 	SEAFOOD.Seafood_name = 'Grass Carp'; 

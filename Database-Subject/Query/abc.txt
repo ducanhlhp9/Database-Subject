@@ -1,0 +1,34 @@
+-- 1. Tổng số tiền khách đã gửi tại "Chi nhánh Tây Hồ"
+select sum(SOTIEN) from TIETKIEM where NOI_GUI = 'CN05';
+-- 2. Số tiền gửi cao nhất trong tháng 2/2017
+select max(SOTIEN) from TIETKIEM where month(NGAY_GUI) = 2 and year(NGAY_GUI) = 2017;
+-- 3. Họ tên khách hàng có nhiều lần gửi tiền nhất
+select t.MKH, k.concat(HODEM,' ', TEN) 
+from TIETKIEM t join KHACHHANG k
+on t.MKH = k.MKH
+group by t.MKH
+having count(MASO) limit 1;
+-- 4. Họ tên khách hàng có tổng số tiền gửi nhiều nhất
+select t.MKH, k.concat(HODEM,' ', TEN), sum(t.SOTIEN)
+from TIETKIEM t join KHACHHANG k
+on t.MKH = k.MKH
+group by t.MKH 
+having sum(t.SOTIEN) > 0 order by sum(t.SOTIEN) DESC limit 1;
+-- 5. Họ tên khách hàng gửi tiền ở nhiều ngân hàng nhất
+select t.MKH, k.concat(HODEM,' ', TEN), count(t.NOI_GUI)
+from TIETKIEM t join KHACHHANG k
+on t.MKH = k.MKH
+group by t.NOI_GUI
+having count(t.NOI_GUI) > 1 order by count(t.NOI_GUI) DESC limit 1;
+-- 6. Danh sách các khách hàng có địa chỉ ở quận "Hai Bà - Hà Nội"
+select * from KHACHHANG where DIACHI like 'Hai Bà - Hà Nội';
+-- 7. Email của khách hàng có số tiền gửi cao nhất ở kỳ hạn 36 tháng
+select k.EMAIL
+from KHACHHANG k join TIETKIEM t
+on k.MKH = t.MKH
+where KIHAN = 'T36' order by t.SOTIEN DESC limit 1;
+-- 10. Lập danh sách và các thông tin của tất cả khách hàng do Phan Thu Huệ phụ trách
+select *
+from KHACHHANG k join TIETKIEM t
+on k.MKH = t.MKH
+where NOI_GUI = 'CN2';
